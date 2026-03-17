@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, ArrowLeftRight } from 'lucide-react';
+import { Pencil, Trash2, ArrowLeftRight, Copy, Check } from 'lucide-react';
 import { InventoryItem } from '@/types';
 import { useInventory } from '@/context/InventoryContext';
 import { formatCurrency } from '@/utils/helpers';
@@ -15,10 +15,11 @@ interface InventoryCardProps {
 }
 
 export default function InventoryCard({ item, onEdit, onTransfer }: InventoryCardProps) {
-  const { updateQuantity, deleteItem } = useInventory();
+  const { updateQuantity, deleteItem, addItem } = useInventory();
   const [deleting, setDeleting] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const isShop = item.location === 'shop';
   const accentColor = isShop ? 'emerald' : 'amber';
@@ -26,6 +27,22 @@ export default function InventoryCard({ item, onEdit, onTransfer }: InventoryCar
   const handleDelete = () => {
     setDeleting(true);
     setTimeout(() => deleteItem(item.id), 300);
+  };
+
+  const handleCopy = async () => {
+    if (copied) return;
+    setCopied(true);
+    
+    try {
+      // Create a duplicate by stripping unique fields
+      const { id, createdAt, updatedAt, ...payload } = item;
+      await addItem(payload);
+      // Wait a bit to show success icon
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to duplicate!', err);
+      setCopied(false);
+    }
   };
 
   // Swipe gesture handling
@@ -99,6 +116,18 @@ export default function InventoryCard({ item, onEdit, onTransfer }: InventoryCar
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={handleCopy}
+              aria-label="Copy item details"
+              className={cn(
+                "flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
+                copied 
+                  ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" 
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+              )}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
             <button
               onClick={() => onTransfer(item)}
               aria-label="Transfer item"
