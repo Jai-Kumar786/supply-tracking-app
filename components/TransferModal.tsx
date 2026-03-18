@@ -16,11 +16,13 @@ interface TransferModalProps {
 export default function TransferModal({ open, onClose, item }: TransferModalProps) {
   const { transferItem } = useInventory();
   const [quantity, setQuantity] = useState(1);
+  const [transferDate, setTransferDate] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (item) {
       setQuantity(Math.min(1, item.quantity));
+      setTransferDate(item.date);
       setError('');
     }
   }, [item, open]);
@@ -39,11 +41,16 @@ export default function TransferModal({ open, onClose, item }: TransferModalProp
       setError(`Max available: ${maxQty}`);
       return;
     }
+    if (!transferDate) {
+      setError('Please select a date');
+      return;
+    }
     transferItem({
       itemId: item.id,
       quantity,
       from: item.location,
       to: toLocation,
+      date: transferDate,
     });
     onClose();
   };
@@ -123,32 +130,50 @@ export default function TransferModal({ open, onClose, item }: TransferModalProp
           </div>
 
           {/* Quantity */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">
-              Quantity to Transfer
-            </label>
-            <div className="flex items-center gap-3">
-              <QuantityControl
-                quantity={quantity}
-                onIncrement={() => {
-                  setQuantity((q) => Math.min(maxQty, q + 1));
-                  setError('');
-                }}
-                onDecrement={() => {
-                  setQuantity((q) => Math.max(1, q - 1));
-                  setError('');
-                }}
-                size="lg"
-              />
-              <button
-                onClick={() => setQuantity(maxQty)}
-                className="ml-auto text-xs text-primary font-medium border border-primary/30 rounded-lg px-2.5 py-1.5 hover:bg-primary/5 transition-colors"
-              >
-                Max ({maxQty})
-              </button>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Quantity to Transfer
+              </label>
+              <div className="flex items-center gap-3">
+                <QuantityControl
+                  quantity={quantity}
+                  onIncrement={() => {
+                    setQuantity((q) => Math.min(maxQty, q + 1));
+                    setError('');
+                  }}
+                  onDecrement={() => {
+                    setQuantity((q) => Math.max(1, q - 1));
+                    setError('');
+                  }}
+                  size="lg"
+                />
+                <button
+                  onClick={() => setQuantity(maxQty)}
+                  className="ml-auto text-xs text-primary font-medium border border-primary/30 rounded-lg px-2.5 py-1.5 hover:bg-primary/5 transition-colors"
+                >
+                  Max ({maxQty})
+                </button>
+              </div>
             </div>
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+
+            <div>
+              <label htmlFor="transfer-date" className="text-xs font-medium text-muted-foreground mb-2 block">
+                Transfer Date
+              </label>
+              <input
+                id="transfer-date"
+                type="date"
+                value={transferDate}
+                onChange={(e) => {
+                  setTransferDate(e.target.value);
+                  setError('');
+                }}
+                className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
+            </div>
           </div>
+          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </div>
 
         {/* Footer */}

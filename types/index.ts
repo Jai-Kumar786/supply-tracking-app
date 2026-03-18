@@ -34,6 +34,7 @@ export interface TransferPayload {
   quantity: number;
   from: Location;
   to: Location;
+  date: string;
 }
 
 export interface SummaryStats {

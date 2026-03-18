@@ -78,7 +78,7 @@ export async function deleteItem(id: string) {
 /**
  * Atomic transfer operation using a database transaction.
  */
-export async function transferItem({ itemId, quantity, from, to }: TransferPayload) {
+export async function transferItem({ itemId, quantity, from, to, date }: TransferPayload) {
   try {
     return await prisma.$transaction(async (tx) => {
       // 1. Get source item
@@ -106,12 +106,12 @@ export async function transferItem({ itemId, quantity, from, to }: TransferPaylo
         });
       }
 
-      // 3. Find if target exists
+      // 3. Find if target exists - at the destination with the NEW date
       const existingDest = await tx.inventoryItem.findFirst({
         where: {
           commodityName: sourceItem.commodityName,
           location: to,
-          date: sourceItem.date,
+          date: date, // Use the provided transfer date
         },
       });
 
@@ -129,7 +129,7 @@ export async function transferItem({ itemId, quantity, from, to }: TransferPaylo
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             commodityName: sourceItem.commodityName,
             location: to,
-            date: sourceItem.date,
+            date: date, // Use the provided transfer date
             price: sourceItem.price,
             quantity: transferQty,
             createdAt: now,
